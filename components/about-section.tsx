@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -21,7 +22,7 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.8,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
 }
@@ -34,7 +35,7 @@ const imageVariants = {
     x: 0,
     transition: {
       duration: 0.8,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
   hover: {

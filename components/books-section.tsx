@@ -4,6 +4,8 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { useState } from "react"
 
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
 const books = [
   {
     id: 1,
@@ -57,7 +59,7 @@ const titleVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
 }
@@ -69,7 +71,7 @@ const bookVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
   hover: {

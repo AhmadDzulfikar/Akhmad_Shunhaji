@@ -4,6 +4,8 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
 const navItems = [
   { label: "HOME", href: "/" },
   { label: "ABOUT", href: "/about" },
@@ -19,7 +21,7 @@ const navVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
 }
