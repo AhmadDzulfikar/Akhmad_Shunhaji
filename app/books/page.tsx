@@ -7,6 +7,9 @@ import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+
 const booksData = [
   {
     id: 1,
@@ -108,7 +111,7 @@ const titleVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
 }
@@ -120,7 +123,7 @@ const bookCardVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
   hover: {
