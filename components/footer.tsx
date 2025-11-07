@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { Facebook, Youtube, Instagram } from "lucide-react"
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+const EASE_IN_OUT: [number, number, number, number] = [0.37, 0, 0.63, 1]
 
 const socialLinks = [
   {
@@ -60,7 +61,7 @@ const iconVariants = {
     scale: 1.2,
     transition: {
       duration: 0.3,
-      ease: "easeInOut",
+      ease: EASE_IN_OUT,
     },
   },
 }
