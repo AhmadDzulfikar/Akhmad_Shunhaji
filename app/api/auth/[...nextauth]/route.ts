@@ -1,8 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs"; // pastikan tidak running di Edge
+
+
 
 const handler = NextAuth({
   providers: [
@@ -56,4 +59,6 @@ const handler = NextAuth({
   ],
   session: { strategy: "jwt" },
 });
+
+
 export { handler as GET, handler as POST };
