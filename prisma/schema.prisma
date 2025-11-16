@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+  // output custom boleh, atau hapus saja biar default:
+  // output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  title     String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+}
