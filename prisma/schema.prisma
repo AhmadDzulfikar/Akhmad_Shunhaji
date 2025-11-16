@@ -16,4 +16,4 @@ model Post {
   content   String
   imageUrl  String?
   createdAt DateTime @default(now())
-}
+} 

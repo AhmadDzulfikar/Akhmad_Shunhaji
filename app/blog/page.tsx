@@ -3,159 +3,137 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Navbar } from "@/components/navbar"
 
-// === Sanity wiring ===
-import { groq } from "next-sanity"
-import { sanityClient } from "@/lib/sanity.client"
-import { urlFor } from "@/lib/image"
-
-type SanityBlock = {
-  _type: string
-  children?: { _type: string; text?: string }[]
-}
-
-type PostDoc = {
-  _id: string
-  title: string
-  slug: { current: string }
-  coverImage?: any
-  content?: SanityBlock[]
-  date: string // coalesce(publishedAt, _createdAt)
-}
-
-// Query: list + count (12/halaman, terbaru di atas)
 const PAGE_SIZE = 12
-const LIST_QUERY = groq`*[_type=="post"]
-| order(coalesce(publishedAt, _createdAt) desc)[$start...$end]{
-  _id,
-  title,
-  slug,
-  coverImage,
-  content,
-  "date": coalesce(publishedAt, _createdAt)
-}`
-const COUNT_QUERY = groq`count(*[_type=="post"])`
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-// Helper: ambil ringkasan teks dari Portable Text (jika kamu tidak punya field excerpt)
-function toExcerpt(blocks?: SanityBlock[], maxLen = 180): string {
-  if (!blocks || !Array.isArray(blocks)) return ""
-  const text = blocks
-    .filter(b => b._type === "block")
-    .map(b => (b.children || []).map(c => c.text || "").join(""))
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim()
-  if (text.length <= maxLen) return text
-  return text.slice(0, maxLen).trim() + "…"
+type PostItem = {
+  id: number | string
+  slug: string
+  title: string
+  content?: string
+  imageUrl?: string | null
+  createdAt: string // ISO
+}
+
+type ListResponse = {
+  items: PostItem[]
+  total: number
+  page?: number
+  pageCount?: number
+}
+
+function toExcerpt(input?: string, maxLen = 180) {
+  if (!input) return ""
+  const text = input.replace(/\s+/g, " ").trim()
+  return text.length <= maxLen ? text : text.slice(0, maxLen).trim() + "…"
 }
 
 export default function BlogPage() {
+  const { data: session } = useSession()
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
-  const [posts, setPosts] = useState<PostDoc[]>([])
+  const [posts, setPosts] = useState<PostItem[]>([])
+  const [error, setError] = useState<string | null>(null)
 
-  // Ambil total count sekali di awal
+  // Ambil list posting (12/halaman)
   useEffect(() => {
-    let active = true
+    let alive = true
     ;(async () => {
+      setLoading(true)
+      setError(null)
       try {
-        const total: number = await sanityClient.fetch(COUNT_QUERY)
-        if (!active) return
-        setTotalPages(Math.max(1, Math.ceil(total / PAGE_SIZE)))
-      } catch (e) {
-        // Optional: console.error(e)
-        setTotalPages(1)
-      }
-    })()
-    return () => { active = false }
-  }, [])
-
-  // Ambil halaman saat currentPage berubah
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    const start = (currentPage - 1) * PAGE_SIZE
-    const end = start + PAGE_SIZE
-    ;(async () => {
-      try {
-        const docs: PostDoc[] = await sanityClient.fetch(LIST_QUERY, { start, end })
-        if (!active) return
-        setPosts(docs)
-      } catch (e) {
-        // Optional: console.error(e)
+        const res = await fetch(`/api/posts?page=${currentPage}&pageSize=${PAGE_SIZE}`, {
+          cache: "no-store",
+        })
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Fetch /api/posts failed (${res.status}): ${text.slice(0,180)}...`);
+        }
+        const data: ListResponse = await res.json();
+        if (!alive) return
+        setPosts(data.items ?? [])
+        const pages = data.pageCount ?? Math.max(1, Math.ceil((data.total ?? 0) / PAGE_SIZE))
+        setTotalPages(pages || 1)
+      } catch (e: any) {
+        if (!alive) return
+        setError(e?.message ?? "Failed to load posts")
         setPosts([])
+        setTotalPages(1)
       } finally {
-        if (active) setLoading(false)
+        if (alive) setLoading(false)
       }
     })()
-    return () => { active = false }
+    return () => {
+      alive = false
+    }
   }, [currentPage])
 
-  // Mapping ke shape UI lama (id, slug, title, excerpt, image, date)
-  const currentBlogs = useMemo(() => {
-    return posts.map((p, idx) => ({
-      id: p._id ?? `${p.slug?.current ?? "post"}-${idx}`,
-      slug: p.slug?.current ?? "",
-      title: p.title ?? "",
-      excerpt: toExcerpt(p.content),
-      image: p.coverImage ? urlFor(p.coverImage).width(1200).height(800).url() : "/placeholder.png",
-      date: p.date, // ISO string
-    }))
-  }, [posts])
+  const currentBlogs = useMemo(
+    () =>
+      posts.map((p, i) => ({
+        id: p.id ?? `${p.slug}-${i}`,
+        slug: p.slug,
+        title: p.title,
+        excerpt: toExcerpt(p.content),
+        image: p.imageUrl || "/placeholder.png",
+        date: p.createdAt,
+      })),
+    [posts]
+  )
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
   }
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE_OUT } },
   }
-
   const titleVariants = {
     hidden: { opacity: 0, y: -20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_OUT } },
   }
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
-      {/* Title Section */}
-      <motion.div className="pt-20 pb-12 px-8 text-center" initial="hidden" animate="visible" variants={titleVariants}>
-        <h1 className="text-5xl md:text-6xl font-bold text-[#f5f1e8] tracking-tight">Shunhaji Blog</h1>
-        <motion.div
-          className="h-1 w-24 bg-gradient-to-r from-[#4a9d6f] to-[#2d6a4f] mx-auto mt-6"
-          initial={{ width: 0 }}
-          animate={{ width: 96 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        />
+      <Navbar />
+
+      {/* Title + Add Blog (hanya saat login) */}
+      <motion.div className="pt-20 pb-6 px-8" initial="hidden" animate="visible" variants={titleVariants}>
+        <div className="max-w-7xl mx-auto flex items-end justify-between gap-4">
+          <div className="text-center md:text-left">
+            <h1 className="text-5xl md:text-6xl font-bold text-[#f5f1e8] tracking-tight">Shunhaji Blog</h1>
+            <motion.div
+              className="h-1 w-24 bg-gradient-to-r from-[#4a9d6f] to-[#2d6a4f] mt-6"
+              initial={{ width: 0 }}
+              animate={{ width: 96 }}
+              transition={{ delay: 0.3, duration: 0.6, ease: EASE_OUT }}
+            />
+          </div>
+
+          {session?.user && (
+            <Link
+              href="/blog/new"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4a9d6f] text-[#1a1a1a] font-semibold hover:opacity-90 transition"
+            >
+              <Plus size={18} />
+              Add Blog
+            </Link>
+          )}
+        </div>
       </motion.div>
 
       {/* Blog Grid */}
-      <motion.div
-        className="max-w-7xl mx-auto px-8 pb-16"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      <motion.div className="max-w-7xl mx-auto px-8 pb-16" variants={containerVariants} initial="hidden" animate="visible">
         {loading ? (
           <div className="text-center text-[#b8b8b8] py-20">Loading posts…</div>
+        ) : error ? (
+          <div className="text-center text-red-400 py-20">Error: {error}</div>
         ) : currentBlogs.length === 0 ? (
           <div className="text-center text-[#b8b8b8] py-20">No posts found.</div>
         ) : (
@@ -171,7 +149,7 @@ export default function BlogPage() {
                         alt={blog.title}
                         className="w-full h-full object-cover"
                         whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.3, ease: EASE_OUT }}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                     </div>
@@ -208,7 +186,7 @@ export default function BlogPage() {
         className="flex items-center justify-center gap-4 pb-20"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+        transition={{ delay: 0.2, duration: 0.5, ease: EASE_OUT }}
       >
         <motion.button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
