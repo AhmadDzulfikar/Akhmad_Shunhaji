@@ -1,13 +1,11 @@
-# GANTI KE NODE 20 (SOLUSI ERROR ANDA)
+# GANTI KE NODE 20
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN npm ci
 
@@ -19,6 +17,15 @@ COPY . .
 
 # Disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# --- SOLUSI ERROR PRERENDER (DUMMY VARS) ---
+# Kita masukkan variabel palsu supaya build tidak error karena variabel kosong.
+# Tenang saja, ini hanya dipakai saat 'build'. 
+# Saat 'running' di VPS nanti, kita pakai variabel asli.
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV NEXTAUTH_SECRET="dummy_secret_for_build_process"
+ENV NEXTAUTH_URL="http://localhost:3000"
+# -------------------------------------------
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -42,8 +49,7 @@ COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# Copy output standalone
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
