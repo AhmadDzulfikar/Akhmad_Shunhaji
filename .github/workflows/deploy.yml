@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: asshavy/akhmad_shunhaji
+  IMAGE_NAME: ${{ github.repository_owner }}/akhmad_shunhaji
   NEXT_PUBLIC_SANITY_PROJECT_ID: zm1ywn7o
   NEXT_PUBLIC_SANITY_DATASET: production
 
