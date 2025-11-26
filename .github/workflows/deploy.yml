@@ -2,11 +2,13 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: ["main", "master"] # Ini akan jalan kalau anda push ke branch main atau master
+    branches: ["main", "master"]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: asshavy/akhmad_shunhaji
+  NEXT_PUBLIC_SANITY_PROJECT_ID: zm1ywn7o
+  NEXT_PUBLIC_SANITY_DATASET: production
 
 jobs:
   build-and-push:
@@ -42,3 +44,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_SANITY_PROJECT_ID=${{ env.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+            NEXT_PUBLIC_SANITY_DATASET=${{ env.NEXT_PUBLIC_SANITY_DATASET }}
