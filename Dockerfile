@@ -39,6 +39,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# --- [PERUBAHAN DISINI] ---
+# Copy node_modules dari builder agar 'npx prisma' menggunakan versi lokal (v5)
+# dan TIDAK mendownload versi terbaru (v7) dari internet.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# --------------------------
+
 COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
