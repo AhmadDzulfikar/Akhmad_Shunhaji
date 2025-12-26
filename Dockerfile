@@ -27,23 +27,21 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-
-# Bikin user non-root
-RUN useradd -m nextjs
-USER nextjs
-
-# Copy node_modules (biar npx prisma pakai prisma 5.21.1 lokal)
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy public & build output
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-
-EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Migrasi DB dulu, baru jalanin server
-CMD ["sh", "-c", "npx prisma db push && node server.js"]
+RUN useradd -m nextjs
+
+# copy dengan owner nextjs
+COPY --from=builder --chown=nextjs:nextjs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nextjs /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nextjs /app/prisma ./prisma
+
+USER nextjs
+EXPOSE 3000
+
+# pilih salah satu:
+# CMD ["sh","-c","npx prisma migrate deploy --skip-generate && node server.js"]
+CMD ["sh","-c","npx prisma db push --skip-generate && node server.js"]
