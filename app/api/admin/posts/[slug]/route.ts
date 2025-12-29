@@ -26,22 +26,28 @@ const updateSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal("")).nullable().optional(),
 });
 
-export async function GET(_req: Request, { params }: { params: { slug: string } }) {
+export async function GET(
+  _req: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const slug = params.slug;
+  const { slug } = await context.params;
   const post = await prisma.post.findUnique({ where: { slug } });
 
   if (!post) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(post);
 }
 
-export async function PUT(req: Request, { params }: { params: { slug: string } }) {
+export async function PUT(
+  req: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const currentSlug = params.slug;
+  const { slug: currentSlug } = await context.params;
   const body = await req.json().catch(() => null);
 
   const parsed = updateSchema.safeParse(body);
@@ -79,11 +85,14 @@ export async function PUT(req: Request, { params }: { params: { slug: string } }
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { slug: string } }) {
+export async function DELETE(
+  _req: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const slug = params.slug;
+  const { slug } = await context.params;
 
   try {
     await prisma.post.delete({ where: { slug } });

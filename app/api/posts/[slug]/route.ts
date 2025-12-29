@@ -4,9 +4,12 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, { params }: { params: { slug: string } }) {
+export async function GET(
+  _req: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
   try {
-    const slug = params.slug;
+    const { slug } = await context.params;
     const post = await prisma.post.findUnique({ where: { slug } });
 
     if (!post) return NextResponse.json({ error: "not_found" }, { status: 404 });
