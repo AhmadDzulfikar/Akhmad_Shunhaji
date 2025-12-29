@@ -1,9 +1,30 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import sanitizeHtml from "sanitize-html";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function cleanHtml(input: string) {
+  return sanitizeHtml(input, {
+    allowedTags: ["p", "br", "strong", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "a", "span"],
+    allowedAttributes: {
+      a: ["href", "target", "rel"],
+      "*": ["style"],
+    },
+    allowedStyles: {
+      "*": {
+        "text-align": [/^(left|right|center|justify)$/],
+        "font-size": [/^\d+(\.\d+)?(px|em|rem|%)$/],
+        "font-family": [/^[\w\s"',-]+$/],
+      },
+    },
+    transformTags: {
+      a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer", target: "_blank" }),
+    },
+  });
+}
 
 async function readSlug(context: any): Promise<string> {
   // Next 15/16 kadang params berupa Promise, kadang object biasa
@@ -48,7 +69,8 @@ export async function PUT(req: Request, context: any) {
       );
     }
 
-    const { title, content, imageUrl } = parsed.data;
+    const { title, imageUrl } = parsed.data;
+    const content = cleanHtml(parsed.data.content);
 
     const updated = await prisma.post.update({
       where: { slug },

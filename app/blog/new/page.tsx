@@ -1,32 +1,22 @@
 "use client";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import slugify from "@/lib/slugify"; // your helper; or add simple one below
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [contentHtml, setContentHtml] = useState("<p></p>");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const router = useRouter();
-
-  function toSlug(s: string) {
-    return s
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setErr(null);
 
-    const finalSlug = (slug || toSlug(title)).slice(0, 120);
-    if (!title || !content) {
-      setErr("Title dan content wajib diisi");
+    if (!title || !contentHtml || contentHtml === "<p></p>") {
+      setErr("Title dan isi wajib diisi");
       return;
     }
 
@@ -38,9 +28,8 @@ export default function NewPostPage() {
         cache: "no-store",
         body: JSON.stringify({
           title,
-          slug: finalSlug,
-          content,
-          imageUrl: imageUrl || undefined,
+          content: contentHtml,
+          imageUrl: imageUrl || "",
         }),
       });
 
@@ -62,9 +51,8 @@ export default function NewPostPage() {
         throw new Error(`create_failed (${res.status})`);
       }
 
-      // success → ke halaman blog detail (pakai slug dari server jika ada)
-      const createdSlug = data?.post?.slug || finalSlug;
-      router.push(`/blog/${createdSlug}`);
+      // slug dibuat server → pakai yang dikembalikan
+      router.push(`/blog/${data.post.slug}`);
     } catch (e: any) {
       setErr(e?.message || "Gagal membuat post");
     } finally {
@@ -74,40 +62,29 @@ export default function NewPostPage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-[#f5f1e8] p-8">
-      <form onSubmit={onSubmit} className="max-w-2xl mx-auto space-y-4">
+      <form onSubmit={onSubmit} className="max-w-4xl mx-auto space-y-4">
         <h1 className="text-3xl font-bold">Add Blog</h1>
         {err && <p className="text-red-400">{err}</p>}
 
+        {/* Title */}
         <input
           className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
           placeholder="Title"
           value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (!slug) setSlug(toSlug(e.target.value));
-          }}
-        />
-
-        <input
-          className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
-          placeholder="Slug (kebab-case)"
-          value={slug}
-          onChange={(e) => setSlug(toSlug(e.target.value))}
-        />
-
-        <textarea
-          className="w-full p-3 h-48 rounded bg-[#262727] border border-[#3a3a3a]"
-          placeholder="Content (markdown/plain)"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
         />
 
         <input
           className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
           placeholder="Image URL (opsional)"
-          value={imageUrl || ""}
-          onChange={(e) => setImageUrl(e.target.value || undefined)}
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
         />
+
+        {/* Content (WYSIWYG) */}
+        <div className="pt-2">
+          <RichTextEditor value={contentHtml} onChange={setContentHtml} />
+        </div>
 
         <button
           disabled={submitting}

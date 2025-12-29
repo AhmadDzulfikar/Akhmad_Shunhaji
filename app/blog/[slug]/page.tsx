@@ -133,16 +133,12 @@ export default function BlogDetailPage() {
           <span className="text-[#808080]">By Akhmad Shunhaji</span>
         </motion.div>
 
-        {/* Body (paragraf dari string) */}
-        <motion.div variants={itemVariants} className="prose prose-invert max-w-none">
-          {post.content
-            ?.split(/\n{2,}/g)
-            .map((p, i) => (
-              <p key={i} className="text-[#b8b8b8] text-lg leading-relaxed mb-6 whitespace-pre-wrap">
-                {p}
-              </p>
-            ))}
-        </motion.div>
+        {/* Body (HTML, already sanitized on the API) */}
+        <motion.div
+          variants={itemVariants}
+          className="prose prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: post.content ?? "" }}
+        />
 
         {/* Divider */}
         <motion.div variants={itemVariants} className="h-px bg-gradient-to-r from-[#4a9d6f] to-transparent my-12" />
