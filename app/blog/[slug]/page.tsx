@@ -136,7 +136,7 @@ export default function BlogDetailPage() {
         {/* Body (HTML, already sanitized on the API) */}
         <motion.div
           variants={itemVariants}
-          className="prose prose-invert max-w-none"
+          className="tiptap prose prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: post.content ?? "" }}
         />
 

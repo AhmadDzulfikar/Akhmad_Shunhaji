@@ -27,9 +27,16 @@ type ListResponse = {
 }
 
 function toExcerpt(input?: string, maxLen = 180) {
-  if (!input) return ""
-  const text = input.replace(/\s+/g, " ").trim()
-  return text.length <= maxLen ? text : text.slice(0, maxLen).trim() + "…"
+  const text = (input || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!text) return ""
+  return text.length <= maxLen ? text : text.slice(0, maxLen - 1).trim() + "…"
 }
 
 export default function BlogPage() {
