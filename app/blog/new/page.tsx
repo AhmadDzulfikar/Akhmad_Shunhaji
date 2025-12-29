@@ -62,8 +62,9 @@ export default function NewPostPage() {
         throw new Error(`create_failed (${res.status})`);
       }
 
-      // success → ke halaman blog detail
-      router.push(`/blog/${finalSlug}`);
+      // success → ke halaman blog detail (pakai slug dari server jika ada)
+      const createdSlug = data?.post?.slug || finalSlug;
+      router.push(`/blog/${createdSlug}`);
     } catch (e: any) {
       setErr(e?.message || "Gagal membuat post");
     } finally {

@@ -29,7 +29,7 @@ export default function BlogDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`/api/admin/posts/${slug}`, { cache: "no-store" })
+        const res = await fetch(`/api/posts/${slug}`, { cache: "no-store" })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data: Post = await res.json()
         if (!alive) return
@@ -146,6 +146,13 @@ export default function BlogDetailPage() {
 
         {/* Divider */}
         <motion.div variants={itemVariants} className="h-px bg-gradient-to-r from-[#4a9d6f] to-transparent my-12" />
+
+        <Link
+          href={`/blog/${post.slug}/edit`}
+          className="inline-flex items-center text-[#4a9d6f] hover:underline"
+        >
+          Edit Post
+        </Link>
       </motion.div>
     </div>
   )
