@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Pencil } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import Comments from "@/components/Comments"
 
 type Post = {
@@ -20,6 +21,7 @@ const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const { data: session } = useSession()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,20 +85,32 @@ export default function BlogDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
-      {/* Back Button */}
+      {/* Top Navigation Bar */}
       <motion.div
         className="pt-8 px-8"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-[#4a9d6f] hover:text-[#f5f1e8] transition-colors duration-300"
-        >
-          <ArrowLeft size={20} />
-          Back to Blog
-        </Link>
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-[#4a9d6f] hover:text-[#f5f1e8] transition-colors duration-300"
+          >
+            <ArrowLeft size={20} />
+            Back to Blog
+          </Link>
+          
+          {session?.user && (
+            <Link
+              href={`/blog/${post.slug}/edit`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4a9d6f] text-[#1a1a1a] font-semibold hover:bg-[#3d8a5f] transition-colors duration-300"
+            >
+              <Pencil size={16} />
+              Edit Blog
+            </Link>
+          )}
+        </div>
       </motion.div>
 
       {/* Featured Image */}
@@ -145,13 +159,6 @@ export default function BlogDetailPage() {
 
         {/* Divider */}
         <motion.div variants={itemVariants} className="h-px bg-gradient-to-r from-[#4a9d6f] to-transparent my-12" />
-
-        <Link
-          href={`/blog/${post.slug}/edit`}
-          className="inline-flex items-center text-[#4a9d6f] hover:underline"
-        >
-          Edit Post
-        </Link>
 
         {/* Comments Section */}
         <Comments slug={post.slug} />
