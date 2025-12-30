@@ -136,7 +136,11 @@ export default function BlogPage() {
       </motion.div>
 
       {/* Blog Grid */}
-      <motion.div className="max-w-7xl mx-auto px-8 pb-16" variants={containerVariants} initial="hidden" animate="visible">
+      <motion.div 
+        className="max-w-7xl mx-auto px-8 pb-16" 
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 1 }}
+      >
         {loading ? (
           <div className="text-center text-[#b8b8b8] py-20">Loading posts…</div>
         ) : error ? (
@@ -145,8 +149,15 @@ export default function BlogPage() {
           <div className="text-center text-[#b8b8b8] py-20">No posts found.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentBlogs.map((blog) => (
-              <motion.div key={blog.id} variants={itemVariants} whileHover={{ y: -8 }} className="group cursor-pointer">
+            {currentBlogs.map((blog, idx) => (
+              <motion.div 
+                key={blog.id} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT, delay: idx * 0.05 }}
+                whileHover={{ y: -8 }} 
+                className="group cursor-pointer"
+              >
                 <Link href={`/blog/${blog.slug}`}>
                   <div className="bg-[#262727] rounded-lg overflow-hidden border border-[#3a3a3a] hover:border-[#4a9d6f] transition-colors duration-300">
                     {/* Image */}

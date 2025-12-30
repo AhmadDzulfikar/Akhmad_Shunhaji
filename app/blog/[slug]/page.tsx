@@ -101,12 +101,14 @@ export default function BlogDetailPage() {
 
       {/* Featured Image */}
       <motion.div
-        className="w-full h-96 md:h-[500px] overflow-hidden mt-8"
+        className="max-w-5xl mx-auto px-4 md:px-6 mt-8"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
       >
-        <img src={coverUrl} alt={post.title} className="w-full h-full object-cover" />
+        <div className="h-72 md:h-[420px] overflow-hidden rounded-xl">
+          <img src={coverUrl} alt={post.title} className="w-full h-full object-cover" />
+        </div>
       </motion.div>
 
       {/* Content */}

@@ -2,15 +2,22 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Reply, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { useSession } from "next-auth/react";
+
+// Admin info for auto-fill when logged in
+const ADMIN_NAME = "Akhmad Shunhaji";
+const ADMIN_EMAIL = "akhmadshunhaji@ptiq.ac.id";
 
 // Comment node type (matches API response)
 interface CommentNode {
   id: number;
   name: string;
+  email?: string;
   content: string;
   createdAt: string;
   parentId: number | null;
   replies: CommentNode[];
+  isAuthor?: boolean;
 }
 
 interface CommentsProps {
@@ -48,14 +55,16 @@ function CommentForm({
   onCancel,
   loading,
   isReply = false,
+  isLoggedIn = false,
 }: {
   onSubmit: (name: string, email: string, content: string) => Promise<void>;
   onCancel?: () => void;
   loading: boolean;
   isReply?: boolean;
+  isLoggedIn?: boolean;
 }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(isLoggedIn ? ADMIN_NAME : "");
+  const [email, setEmail] = useState(isLoggedIn ? ADMIN_EMAIL : "");
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -63,11 +72,14 @@ function CommentForm({
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || name.length < 2) {
+    const finalName = isLoggedIn ? ADMIN_NAME : name;
+    const finalEmail = isLoggedIn ? ADMIN_EMAIL : email;
+
+    if (!finalName.trim() || finalName.length < 2) {
       setError("Name must be at least 2 characters");
       return;
     }
-    if (!email.trim() || !email.includes("@")) {
+    if (!finalEmail.trim() || !finalEmail.includes("@")) {
       setError("Please enter a valid email");
       return;
     }
@@ -77,11 +89,13 @@ function CommentForm({
     }
 
     try {
-      await onSubmit(name.trim(), email.trim(), content.trim());
+      await onSubmit(finalName.trim(), finalEmail.trim(), content.trim());
       // Clear form on success
-      setName("");
-      setEmail("");
       setContent("");
+      if (!isLoggedIn) {
+        setName("");
+        setEmail("");
+      }
     } catch (e: any) {
       setError(e?.message || "Failed to post comment");
     }
@@ -103,36 +117,49 @@ function CommentForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-[#b8b8b8] mb-1">
-            Name <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] text-[#f5f1e8] placeholder-[#808080] focus:border-[#4a9d6f] focus:outline-none"
-            disabled={loading}
-            maxLength={60}
-          />
+      {/* Show name/email fields only for non-logged-in users */}
+      {!isLoggedIn && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-[#b8b8b8] mb-1">
+              Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] text-[#f5f1e8] placeholder-[#808080] focus:border-[#4a9d6f] focus:outline-none"
+              disabled={loading}
+              maxLength={60}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-[#b8b8b8] mb-1">
+              Email <span className="text-red-400">*</span>{" "}
+              <span className="text-xs">(not displayed)</span>
+            </label>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] text-[#f5f1e8] placeholder-[#808080] focus:border-[#4a9d6f] focus:outline-none"
+              disabled={loading}
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm text-[#b8b8b8] mb-1">
-            Email <span className="text-red-400">*</span>{" "}
-            <span className="text-xs">(not displayed)</span>
-          </label>
-          <input
-            type="email"
-            placeholder="your@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] text-[#f5f1e8] placeholder-[#808080] focus:border-[#4a9d6f] focus:outline-none"
-            disabled={loading}
-          />
+      )}
+
+      {/* Show logged-in user info */}
+      {isLoggedIn && (
+        <div className="flex items-center gap-2 text-sm text-[#b8b8b8]">
+          <div className="w-6 h-6 rounded-full bg-[#4a9d6f] flex items-center justify-center text-xs font-bold text-[#1a1a1a]">
+            {ADMIN_NAME.charAt(0)}
+          </div>
+          <span>Posting as <span className="text-[#4a9d6f] font-medium">{ADMIN_NAME}</span></span>
         </div>
-      </div>
+      )}
 
       {/* Honeypot field (hidden) */}
       <input
@@ -177,6 +204,7 @@ function CommentItem({
   onSubmitReply,
   onCancelReply,
   replyLoading,
+  isLoggedIn,
 }: {
   comment: CommentNode;
   depth: number;
@@ -185,10 +213,14 @@ function CommentItem({
   onSubmitReply: (name: string, email: string, content: string) => Promise<void>;
   onCancelReply: () => void;
   replyLoading: boolean;
+  isLoggedIn: boolean;
 }) {
   const [showReplies, setShowReplies] = useState(true);
   const actualDepth = Math.min(depth, MAX_DISPLAY_DEPTH - 1);
   const hasReplies = comment.replies && comment.replies.length > 0;
+  
+  // Check if this comment is from the author (admin)
+  const isAuthorComment = comment.isAuthor || comment.name === ADMIN_NAME;
 
   return (
     <div
@@ -212,10 +244,21 @@ function CommentItem({
       >
         {/* Comment Header */}
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-[#4a9d6f] flex items-center justify-center text-sm font-bold text-[#1a1a1a]">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            isAuthorComment 
+              ? "bg-gradient-to-br from-[#4a9d6f] to-[#2d6a4f] ring-2 ring-[#4a9d6f] ring-offset-2 ring-offset-[#1a1a1a] text-white" 
+              : "bg-[#4a9d6f] text-[#1a1a1a]"
+          }`}>
             {comment.name.charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-[#f5f1e8]">{comment.name}</span>
+          <span className={`font-medium ${isAuthorComment ? "text-[#4a9d6f]" : "text-[#f5f1e8]"}`}>
+            {comment.name}
+          </span>
+          {isAuthorComment && (
+            <span className="px-2 py-0.5 text-xs font-semibold bg-[#4a9d6f] text-[#1a1a1a] rounded-full">
+              Author
+            </span>
+          )}
           <span className="text-sm text-[#808080]">
             {formatDate(comment.createdAt)}
           </span>
@@ -270,6 +313,7 @@ function CommentItem({
               onCancel={onCancelReply}
               loading={replyLoading}
               isReply
+              isLoggedIn={isLoggedIn}
             />
           </div>
         )}
@@ -288,6 +332,7 @@ function CommentItem({
               onSubmitReply={onSubmitReply}
               onCancelReply={onCancelReply}
               replyLoading={replyLoading}
+              isLoggedIn={isLoggedIn}
             />
           ))}
         </div>
@@ -298,6 +343,9 @@ function CommentItem({
 
 // Main Comments Component
 export default function Comments({ slug }: CommentsProps) {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+  
   const [comments, setComments] = useState<CommentNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -439,11 +487,13 @@ export default function Comments({ slug }: CommentsProps) {
           Leave a Reply
         </h3>
         <div className="h-px bg-[#3a3a3a] w-24 mb-3" />
-        <p className="text-sm text-[#808080] mb-4">
-          Your email address will not be published. Required fields are marked{" "}
-          <span className="text-red-400">*</span>
-        </p>
-        <CommentForm onSubmit={handleSubmitComment} loading={submitting} />
+        {!isLoggedIn && (
+          <p className="text-sm text-[#808080] mb-4">
+            Your email address will not be published. Required fields are marked{" "}
+            <span className="text-red-400">*</span>
+          </p>
+        )}
+        <CommentForm onSubmit={handleSubmitComment} loading={submitting} isLoggedIn={isLoggedIn} />
       </div>
 
       {/* Comments List */}
@@ -477,6 +527,7 @@ export default function Comments({ slug }: CommentsProps) {
               onSubmitReply={handleSubmitReply}
               onCancelReply={() => setReplyingToId(null)}
               replyLoading={replyLoading}
+              isLoggedIn={isLoggedIn}
             />
           ))}
         </div>
