@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { TextStyle } from "@tiptap/extension-text-style";
 import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
 import { Extension } from "@tiptap/core";
+import { ImageIcon, Link as LinkIcon, Loader2, X } from "lucide-react";
 
 type Props = {
   value: string;
@@ -116,6 +118,12 @@ export default function RichTextEditor({ value, onChange }: Props) {
         types: ["heading", "paragraph"],
       }),
       TabIndent,
+      Image.configure({
+        HTMLAttributes: {
+          class: "max-w-full h-auto rounded-lg my-4",
+        },
+        allowBase64: false,
+      }),
     ],
     content: value || "",
     immediatelyRender: false,
@@ -137,6 +145,97 @@ export default function RichTextEditor({ value, onChange }: Props) {
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [value, editor]);
+
+  // Image upload state
+  const [imageUploading, setImageUploading] = useState(false);
+  const [showImageUrlModal, setShowImageUrlModal] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle inline image file upload
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!editor || !file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setImageError("Only JPG, PNG, WEBP allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Max file size is 5MB");
+      return;
+    }
+
+    setImageError(null);
+    setImageUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/upload?type=inline", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      // Insert image at cursor position
+      editor.chain().focus().setImage({ src: data.url }).run();
+    } catch (e: any) {
+      setImageError(e?.message || "Upload failed");
+    } finally {
+      setImageUploading(false);
+    }
+  }, [editor]);
+
+  // Handle URL image insert
+  const handleImageUrl = useCallback(async () => {
+    if (!editor || !imageUrlInput.trim()) return;
+
+    // Validate URL
+    try {
+      const url = new URL(imageUrlInput.trim());
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("Invalid protocol");
+      }
+    } catch {
+      setImageError("Invalid URL");
+      return;
+    }
+
+    setImageError(null);
+    setImageUploading(true);
+
+    try {
+      const res = await fetch("/api/admin/upload-url?type=inline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: imageUrlInput.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch image");
+      }
+
+      // Insert image at cursor position
+      editor.chain().focus().setImage({ src: data.url }).run();
+      setShowImageUrlModal(false);
+      setImageUrlInput("");
+    } catch (e: any) {
+      setImageError(e?.message || "Failed to process URL");
+    } finally {
+      setImageUploading(false);
+    }
+  }, [editor, imageUrlInput]);
 
   const toggleBtnClass = (active: boolean) =>
     cn(
@@ -286,9 +385,117 @@ export default function RichTextEditor({ value, onChange }: Props) {
         >
           1. List
         </button>
+
+        {/* Image Upload Button */}
+        <div className="relative">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            className={actionBtnClass}
+            onClick={() => imageInputRef.current?.click()}
+            disabled={imageUploading}
+            title="Upload Image"
+          >
+            {imageUploading ? (
+              <Loader2 className="inline-block w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <ImageIcon className="inline-block w-4 h-4 mr-1" />
+                Image
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Image URL Button */}
+        <button
+          type="button"
+          className={actionBtnClass}
+          onClick={() => setShowImageUrlModal(true)}
+          disabled={imageUploading}
+          title="Insert Image from URL"
+        >
+          <LinkIcon className="inline-block w-4 h-4 mr-1" />
+          URL
+        </button>
       </div>
 
+      {/* Image URL Modal */}
+      {showImageUrlModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-[#f5f1e8]">Insert Image from URL</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImageUrlModal(false);
+                  setImageUrlInput("");
+                  setImageError(null);
+                }}
+                className="text-[#808080] hover:text-[#f5f1e8]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <input
+              type="url"
+              placeholder="https://example.com/image.jpg"
+              value={imageUrlInput}
+              onChange={(e) => setImageUrlInput(e.target.value)}
+              className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] text-[#f5f1e8] placeholder-[#808080] focus:border-[#4a9d6f] focus:outline-none mb-3"
+              disabled={imageUploading}
+            />
+            
+            {imageError && (
+              <p className="text-sm text-red-400 mb-3">{imageError}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImageUrlModal(false);
+                  setImageUrlInput("");
+                  setImageError(null);
+                }}
+                className="px-4 py-2 rounded bg-[#262727] text-[#f5f1e8] hover:bg-[#3a3a3a]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleImageUrl}
+                disabled={imageUploading || !imageUrlInput.trim()}
+                className="px-4 py-2 rounded bg-[#4a9d6f] text-[#1a1a1a] font-medium disabled:opacity-50 hover:bg-[#3d8a5f] flex items-center gap-2"
+              >
+                {imageUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                Insert
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <EditorContent editor={editor} />
+
+      {/* Image Error Message */}
+      {imageError && !showImageUrlModal && (
+        <div className="mt-2 text-sm text-red-400">{imageError}</div>
+      )}
 
       <div className="mt-2 text-xs text-[#9a9a9a]">
         Tips: Tab = 4 spasi (atau indent list), Shift+Tab = outdent list.

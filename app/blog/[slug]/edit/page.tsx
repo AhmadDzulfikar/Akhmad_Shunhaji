@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
+import RichTextEditor from "@/components/RichTextEditor";
+import CoverImageInput from "@/components/CoverImageInput";
 
 type Post = {
   id: number;
@@ -143,39 +145,42 @@ export default function EditPostPage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-[#f5f1e8] p-8">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">Edit Blog</h1>
         <p className="text-sm text-[#b8b8b8]">Slug: {slug || "-"}</p>
 
         {err && <p className="text-red-400">{err}</p>}
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <input
-            className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+        <form onSubmit={onSubmit} className="space-y-6">
+          {/* 1. Title */}
+          <div>
+            <label className="block text-sm font-medium text-[#b8b8b8] mb-2">
+              Title <span className="text-red-400">*</span>
+            </label>
+            <input
+              className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] focus:border-[#4a9d6f] focus:outline-none"
+              placeholder="Enter blog title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
 
-          <textarea
-            className="w-full p-3 h-48 rounded bg-[#262727] border border-[#3a3a3a]"
-            placeholder="Content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          {/* 2. Cover Image */}
+          <CoverImageInput value={imageUrl} onChange={setImageUrl} />
 
-          <input
-            className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
-            placeholder="Image URL (opsional)"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
+          {/* 3. Content (WYSIWYG) */}
+          <div>
+            <label className="block text-sm font-medium text-[#b8b8b8] mb-2">
+              Content / Description <span className="text-red-400">*</span>
+            </label>
+            <RichTextEditor value={content} onChange={setContent} />
+          </div>
 
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 rounded bg-[#4a9d6f] text-[#1a1a1a] font-bold disabled:opacity-50"
+              className="px-6 py-3 rounded bg-[#4a9d6f] text-[#1a1a1a] font-bold disabled:opacity-50 hover:bg-[#3d8a5f] transition"
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -184,7 +189,7 @@ export default function EditPostPage() {
               type="button"
               onClick={onDelete}
               disabled={deleting}
-              className="px-6 py-3 rounded bg-red-500 text-[#1a1a1a] font-bold disabled:opacity-50"
+              className="px-6 py-3 rounded bg-red-500 text-white font-bold disabled:opacity-50 hover:bg-red-600 transition"
             >
               {deleting ? "Deleting…" : "Delete"}
             </button>

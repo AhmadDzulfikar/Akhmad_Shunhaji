@@ -2,6 +2,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/RichTextEditor";
+import CoverImageInput from "@/components/CoverImageInput";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
@@ -62,33 +63,37 @@ export default function NewPostPage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-[#f5f1e8] p-8">
-      <form onSubmit={onSubmit} className="max-w-4xl mx-auto space-y-4">
+      <form onSubmit={onSubmit} className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">Add Blog</h1>
         {err && <p className="text-red-400">{err}</p>}
 
-        {/* Title */}
-        <input
-          className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        {/* 1. Title */}
+        <div>
+          <label className="block text-sm font-medium text-[#b8b8b8] mb-2">
+            Title <span className="text-red-400">*</span>
+          </label>
+          <input
+            className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a] focus:border-[#4a9d6f] focus:outline-none"
+            placeholder="Enter blog title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
-        <input
-          className="w-full p-3 rounded bg-[#262727] border border-[#3a3a3a]"
-          placeholder="Image URL (opsional)"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-        />
+        {/* 2. Cover Image */}
+        <CoverImageInput value={imageUrl} onChange={setImageUrl} />
 
-        {/* Content (WYSIWYG) */}
-        <div className="pt-2">
+        {/* 3. Content (WYSIWYG) */}
+        <div>
+          <label className="block text-sm font-medium text-[#b8b8b8] mb-2">
+            Content / Description <span className="text-red-400">*</span>
+          </label>
           <RichTextEditor value={contentHtml} onChange={setContentHtml} />
         </div>
 
         <button
           disabled={submitting}
-          className="px-6 py-3 rounded bg-[#4a9d6f] text-[#1a1a1a] font-bold disabled:opacity-50"
+          className="px-6 py-3 rounded bg-[#4a9d6f] text-[#1a1a1a] font-bold disabled:opacity-50 hover:bg-[#3d8a5f] transition"
         >
           {submitting ? "Publishing…" : "Publish"}
         </button>

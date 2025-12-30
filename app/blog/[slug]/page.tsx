@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import Comments from "@/components/Comments"
 
 type Post = {
   id: number | string
@@ -149,6 +150,9 @@ export default function BlogDetailPage() {
         >
           Edit Post
         </Link>
+
+        {/* Comments Section */}
+        <Comments slug={post.slug} />
       </motion.div>
     </div>
   )

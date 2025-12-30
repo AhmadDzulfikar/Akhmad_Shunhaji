@@ -8,9 +8,10 @@ export const dynamic = "force-dynamic";
 
 function cleanHtml(input: string) {
   return sanitizeHtml(input, {
-    allowedTags: ["p", "br", "strong", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "a", "span"],
+    allowedTags: ["p", "br", "strong", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "a", "span", "img"],
     allowedAttributes: {
       a: ["href", "target", "rel"],
+      img: ["src", "alt", "width", "height", "class"],
       "*": ["style"],
     },
     allowedStyles: {
@@ -37,7 +38,11 @@ async function readSlug(context: any): Promise<string> {
 const updateSchema = z.object({
   title: z.string().min(1, "Title wajib diisi"),
   content: z.string().min(1, "Content wajib diisi"),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  // Accept: empty string, full URL, or relative path starting with /
+  imageUrl: z.string().refine(
+    (val) => val === "" || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://"),
+    { message: "Invalid image URL" }
+  ).optional().or(z.literal("")),
 });
 
 export async function GET(_req: Request, context: any) {
