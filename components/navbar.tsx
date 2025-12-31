@@ -11,7 +11,7 @@ const navItems = [
   { label: "ABOUT", href: "/about" },
   { label: "BOOKS", href: "/books" },
   { label: "BLOG", href: "/blog" },
-  { label: "CONTACT", href: "/#contact" },
+  { label: "CONTACT", href: "/contact" },
 ]
 
 const navVariants = {
