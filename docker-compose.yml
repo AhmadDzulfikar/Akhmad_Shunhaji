@@ -1,0 +1,26 @@
+# Production docker-compose.yml
+# Deploy di server dengan: docker compose up -d
+
+services:
+  web:
+    image: ghcr.io/ahmaddzulfikar/akhmad_shunhaji:latest
+    container_name: akhmad_shunhaji_app
+    restart: always
+    ports:
+      - "3100:3000"
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL}"
+      ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH}"
+      NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID}"
+      NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # ✅ PENTING: uploads persisten di disk server
+    # Folder ./uploads di server akan menyimpan semua gambar blog
+    # Akses publik via URL: /uploads/...
+    volumes:
+      - ./uploads:/app/public/uploads
