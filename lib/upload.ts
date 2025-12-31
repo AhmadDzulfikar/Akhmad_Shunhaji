@@ -101,14 +101,17 @@ export async function processImage(
 }
 
 /**
- * Generate upload path: /uploads/blog/YYYY/MM/
+ * Generate upload path: /api/uploads/blog/YYYY/MM/
+ * Uses API route to serve files (Next.js standalone doesn't serve new static files)
  */
 export function getUploadDir(): { dir: string; urlPath: string } {
   const now = new Date();
   const year = now.getFullYear().toString();
   const month = (now.getMonth() + 1).toString().padStart(2, "0");
 
-  const urlPath = `/uploads/blog/${year}/${month}`;
+  // URL uses API route for serving (works in standalone mode)
+  const urlPath = `/api/uploads/blog/${year}/${month}`;
+  // Filesystem path stays the same
   const dir = path.join(process.cwd(), "public", "uploads", "blog", year, month);
 
   return { dir, urlPath };
