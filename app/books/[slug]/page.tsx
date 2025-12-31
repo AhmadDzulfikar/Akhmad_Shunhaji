@@ -103,6 +103,12 @@ export default function BookDetailPage() {
 
   const book = booksData.find((b) => b.slug === slug)
 
+  const buyLinkBySlug: Record<string, string> = {
+    "manajemen-cinta-dalam-pendidikan": "https://shopee.co.id/product/270374387/27938913723/",
+    "manajemen-cinta-sebagai-hidden-curriculum": "https://shopee.co.id/product/270374387/41827660194/",
+  }
+  const buyUrl = buyLinkBySlug[slug] ?? "https://www.instagram.com/shunhaji_09/"
+
   if (!book) {
     return (
       <div className="min-h-screen bg-[#1a1a1a]">
@@ -185,7 +191,7 @@ export default function BookDetailPage() {
               {/* Buy Button */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
                 <a
-                  href="https://www.instagram.com/shunhaji_09/"
+                  href={buyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block px-8 py-4 bg-[#4a9d6f] text-[#1a1a1a] rounded-full font-bold text-lg hover:bg-[#5ab87f] transition-all duration-300 shadow-lg hover:shadow-xl"
