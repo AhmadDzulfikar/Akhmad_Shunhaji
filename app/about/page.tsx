@@ -62,39 +62,49 @@ const timelineVariants = {
 
 export default function AboutPage() {
   const bioText = [
-    "Akhmad Shunhaji adalah seorang penulis dan penyair Indonesia yang dikenal karya-karyanya yang mendalam dan penuh makna. Lahir di Jakarta, beliau menjalani pendidikan di berbagai institusi terkemuka dan mengembangkan passion untuk menulis sejak usia dini.",
-    "Perjalanan literatur Akhmad dimulai dengan penerbitan puisi pertamanya pada tahun 2010, yang langsung mendapat sambutan positif dari kritikus sastra. Sejak saat itu, beliau terus menghasilkan karya-karya berkualitas tinggi yang menyentuh berbagai tema kehidupan manusia.",
-    "Karya-karya Akhmad telah memenangkan berbagai penghargaan bergengsi, termasuk Penghargaan Sastra Nasional dan Beasiswa Penulis Internasional. Beliau juga aktif dalam komunitas sastra global dan sering mengikuti festival literatur internasional.",
-    "Selain menulis, Akhmad juga aktif menerjemahkan karya-karya sastra dari berbagai bahasa ke dalam bahasa Indonesia, membawa perspektif baru kepada pembaca lokal. Dedikasi beliau terhadap seni sastra telah menginspirasi banyak penulis muda untuk mengembangkan bakat mereka.",
-    "Hingga saat ini, Akhmad terus menulis dan berkontribusi pada perkembangan sastra Indonesia. Karya-karyanya telah diterjemahkan ke dalam berbagai bahasa dan dibaca oleh jutaan pembaca di seluruh dunia, menjadikan beliau salah satu tokoh sastra paling berpengaruh di era modern.",
+    "Saya menerima amanah utama sebagai Ketua Program Studi Magister Manajemen Pendidikan Islam (MPI) Universitas PTIQ Jakarta—rumah akademik tempat saya bertumbuh, berkarya, dan menjaga arah pengembangan keilmuan manajemen pendidikan Islam. Di sini, fokus saya adalah memastikan prodi berjalan dengan ritme yang sehat: kurikulumnya relevan, layanan akademiknya rapi, budaya risetnya hidup, dan mutu pembelajarannya terus bergerak naik lewat perbaikan yang nyata, bukan sekadar bagus di atas kertas.",
+    "Di saat yang sama, saya juga mengemban tanggung jawab sebagai Ketua STAI Fatahillah Serpong, Banten. Saya melihat kampus sebagai rumah bersama yang perlu ditata dengan hangat sekaligus tertib—agar mahasiswa merasa aman untuk bertumbuh, dosen punya ruang untuk berkembang, dan organisasi bergerak dengan arah yang jelas. Karena itu, saya banyak menaruh perhatian pada penguatan tata kelola, penjaminan mutu, dan kebiasaan kerja yang sederhana namun konsisten: yang mudah dijalankan, mudah dibuktikan, dan benar-benar terasa dampaknya.",
+    "Di tingkat jejaring, saya dipercaya menjadi Ketua APTIKIS Jakarta–Banten (2024-2027). Amanah ini membuat saya semakin yakin bahwa kemajuan perguruan tinggi bukan hanya urusan masing-masing kampus, tetapi juga soal saling menguatkan. Saya berusaha merawat ruang kolaborasi antarkampus—berbagi praktik baik, berdiskusi tentang kebijakan, dan menumbuhkan iklim peningkatan mutu yang tidak melelahkan, tetapi justru memberi harapan dan energi.",
+    "Di luar dunia kampus, saya juga menjalankan khidmah sebagai Rois Syuriah MWC NU Kramatjati, Jakarta Timur (2021-2026). Bagi saya, ini bukan sekadar peran struktural, melainkan kesempatan untuk menjaga nilai, adab, dan keteduhan sosial di tengah kehidupan yang cepat dan sering bising.",
+    "Semua amanah ini pada akhirnya bertemu di satu titik yang sama: ikhtiar agar pendidikan dan pelayanan publik berjalan lebih manusiawi—tertata, bermakna, dan menghadirkan kemaslahatan yang bisa dirasakan.",
   ]
 
-  const awards = [
-    { year: "2023", title: "Penghargaan Sastra Nasional", description: "Penghargaan tertinggi untuk kontribusi sastra" },
-    { year: "2022", title: "Beasiswa Penulis Internasional", description: "Fellowship dari institusi sastra global" },
-    { year: "2021", title: "Penghargaan Buku Terbaik", description: "Untuk karya 'Mimpi di Tengah Malam'" },
-    { year: "2020", title: "Penghargaan Kritikus Sastra", description: "Pengakuan dari komunitas sastra" },
+  const roles = [
+    { title: "Ketua Prodi Magister MPI", institution: "Universitas PTIQ Jakarta", description: "Mengelola program studi dengan fokus pada kurikulum relevan dan mutu pembelajaran" },
+    { title: "Ketua STAI Fatahillah", institution: "Serpong, Banten", description: "Memimpin dengan penguatan tata kelola dan penjaminan mutu" },
+    { title: "Ketua APTIKIS", institution: "Jakarta–Banten (2024-2027)", description: "Merawat kolaborasi antarkampus dan peningkatan mutu bersama" },
+    { title: "Rois Syuriah MWC NU", institution: "Kramatjati, Jakarta Timur (2021-2026)", description: "Menjaga nilai, adab, dan keteduhan sosial" },
   ]
 
   const timeline = [
-    { year: "2010", event: "Penerbitan puisi pertama 'Suara Hati'" },
-    { year: "2013", event: "Menerbitkan novel debut 'Perjalanan Jiwa'" },
-    { year: "2016", event: "Mulai menerjemahkan karya sastra internasional" },
-    { year: "2019", event: "Menerbitkan koleksi puisi 'Cahaya Malam'" },
-    { year: "2023", event: "Karya diterjemahkan ke 15 bahasa" },
+    { year: "2021", event: "Menjabat sebagai Rois Syuriah MWC NU Kramatjati" },
+    { year: "2024", event: "Dipercaya sebagai Ketua APTIKIS Jakarta–Banten" },
+    { year: "Sekarang", event: "Ketua Prodi Magister MPI Universitas PTIQ Jakarta" },
+    { year: "Sekarang", event: "Ketua STAI Fatahillah Serpong, Banten" },
   ]
 
   return (
     <main className="bg-[#1a1a1a] min-h-screen">
       <Navbar currentPage="ABOUT" />
 
-      {/* Hero Section with Blog Button */}
+      {/* Hero Section with Title */}
       <motion.div
-        className="relative pt-24 pb-12 px-8"
+        className="relative pt-24 pb-8 px-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
-      />
+      >
+        <div className="max-w-7xl mx-auto">
+          <motion.h1
+            className="text-4xl lg:text-5xl font-bold text-[#f5f1e8] tracking-wide text-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: EASE_OUT }}
+          >
+            Mengenal Akhmad Shunhaji
+          </motion.h1>
+        </div>
+      </motion.div>
 
       {/* Main Biography Section */}
       <motion.section className="px-8 py-12" variants={containerVariants} initial="hidden" animate="visible">
@@ -163,7 +173,7 @@ export default function AboutPage() {
             transition={{ duration: 0.6, ease: EASE_OUT }}
             viewport={{ once: true }}
           >
-            Penghargaan & Pengakuan
+            Amanah & Peran
           </motion.h2>
 
           <motion.div
@@ -173,7 +183,7 @@ export default function AboutPage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            {awards.map((award, index) => (
+            {roles.map((role, index) => (
               <motion.div
                 key={index}
                 className="bg-[#262727] p-6 rounded-lg border border-[#3a3a3a] hover:border-[#4a9d6f]"
@@ -182,17 +192,16 @@ export default function AboutPage() {
               >
                 <motion.div className="flex items-start gap-4">
                   <motion.div
-                    className="text-[#4a9d6f] font-bold text-lg min-w-fit"
+                    className="w-3 h-3 mt-2 bg-[#4a9d6f] rounded-full flex-shrink-0"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: index * 0.1, ease: EASE_OUT }}
                     viewport={{ once: true }}
-                  >
-                    {award.year}
-                  </motion.div>
+                  />
                   <div>
-                    <h3 className="text-[#f5f1e8] font-semibold text-lg mb-2">{award.title}</h3>
-                    <p className="text-[#a8a39e] text-sm">{award.description}</p>
+                    <h3 className="text-[#f5f1e8] font-semibold text-lg mb-1">{role.title}</h3>
+                    <p className="text-[#4a9d6f] text-sm mb-2">{role.institution}</p>
+                    <p className="text-[#a8a39e] text-sm">{role.description}</p>
                   </div>
                 </motion.div>
               </motion.div>

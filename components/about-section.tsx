@@ -65,26 +65,27 @@ export function AboutSection() {
 
         {/* Text Content */}
         <motion.div className="space-y-6" variants={containerVariants}>
+          <motion.h2 className="text-2xl md:text-3xl font-bold text-[#f5f1e8] tracking-wide" variants={itemVariants}>
+            Mengenal Akhmad Shunhaji
+          </motion.h2>
+
           <motion.p className="text-[#d4d4d4] leading-relaxed text-lg" variants={itemVariants}>
-            Saya adalah seorang penulis dan penulis buku yang berdedikasi untuk menciptakan karya-karya yang
-            menginspirasi dan menggerakkan hati pembaca. Dengan pengalaman lebih dari satu dekade dalam industri
-            penerbitan, saya telah mengembangkan gaya penulisan yang unik dan menarik.
+            Ketua Program Studi Magister Manajemen Pendidikan Islam (MPI) Universitas PTIQ Jakarta dan Ketua STAI Fatahillah Serpong, Banten. Fokus saya adalah memastikan pendidikan berjalan dengan ritme yang sehat: kurikulumnya relevan, layanan akademiknya rapi, dan mutu pembelajarannya terus bergerak naik.
           </motion.p>
 
           <motion.p className="text-[#d4d4d4] leading-relaxed text-lg" variants={itemVariants}>
-            Setiap buku yang saya tulis adalah hasil dari riset mendalam, refleksi pribadi, dan komitmen untuk
-            memberikan nilai kepada pembaca. Saya percaya bahwa sastra memiliki kekuatan untuk mengubah perspektif dan
-            menginspirasi perubahan positif.
+            Dipercaya sebagai Ketua APTIKIS Jakarta–Banten (2024-2027) dan Rois Syuriah MWC NU Kramatjati. Semua amanah ini bertemu di satu titik: ikhtiar agar pendidikan dan pelayanan publik berjalan lebih manusiawi—tertata, bermakna, dan menghadirkan kemaslahatan.
           </motion.p>
 
-          <motion.button
-            className="px-8 py-3 border-2 border-[#4a9d6f] text-[#4a9d6f] rounded-full font-semibold uppercase tracking-wide hover:bg-[#4a9d6f] hover:text-[#262727] transition-all duration-300"
+          <motion.a
+            href="/about"
+            className="inline-block px-8 py-3 border-2 border-[#4a9d6f] text-[#4a9d6f] rounded-full font-semibold uppercase tracking-wide hover:bg-[#4a9d6f] hover:text-[#262727] transition-all duration-300"
             variants={itemVariants}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             Read More
-          </motion.button>
+          </motion.a>
         </motion.div>
       </div>
     </motion.section>
