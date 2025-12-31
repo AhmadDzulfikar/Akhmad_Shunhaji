@@ -59,7 +59,7 @@ export function AboutSection() {
         {/* Image */}
         <motion.div className="flex justify-center" variants={imageVariants} whileHover="hover">
           <div className="relative w-full max-w-sm aspect-square rounded-lg overflow-hidden">
-            <Image src="/author-portrait.jpg" alt="Akhmad Shunhaji" fill className="object-cover" />
+            <Image src="/author-portrait.webp" alt="Akhmad Shunhaji" fill className="object-cover" />
           </div>
         </motion.div>
 

@@ -109,7 +109,7 @@ export default function AboutPage() {
                   whileHover={{ y: -8 }}
                   transition={{ duration: 0.3, ease: EASE_OUT }}
                 >
-                  <Image src="/author-portrait.jpg" alt="Akhmad Shunhaji" fill className="object-cover" priority />
+                  <Image src="/author-portrait.webp" alt="Akhmad Shunhaji" fill className="object-cover" priority />
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent opacity-0"
                     whileHover={{ opacity: 0.3 }}

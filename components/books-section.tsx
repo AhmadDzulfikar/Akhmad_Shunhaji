@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
+import Link from "next/link"
 import { useState } from "react"
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
@@ -9,35 +10,35 @@ const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 const books = [
   {
     id: 1,
-    title: "The Midnight Library",
+    title: "Aku, Kamu, DIA",
     author: "Akhmad Shunhaji",
-    description: "A novel about choices and second chances.",
-    image: "/midnight-library-cover.png",
-    url: "#",
+    description: "Ajakan pelan-pelan untuk berhenti sebentar dari ramainya hari, lalu bertanya dengan jujur: sebenarnya, hidupku sedang ke mana?",
+    image: "/aku_kamu_dan_dia.webp",
+    url: "/books/aku-kamu-dan-dia",
   },
   {
     id: 2,
-    title: "Half of a Yellow Sun",
+    title: "Manajemen Cinta dalam Pendidikan",
     author: "Akhmad Shunhaji",
-    description: "A powerful story set during the Nigerian-Biafran War.",
-    image: "/book-cover-yellow-sun.jpg",
-    url: "#",
+    description: "Napas baru untuk ruang kelas—mengingatkan bahwa pendidikan yang hebat selalu punya unsur yang sering hilang: rasa manusia.",
+    image: "/manajemen_cinta_dalam_pendidikan.webp",
+    url: "/books/manajemen-cinta-dalam-pendidikan",
   },
   {
     id: 3,
-    title: "Americanah",
+    title: "Manajemen Cinta sebagai Hidden Curriculum di Madrasah",
     author: "Akhmad Shunhaji",
-    description: "An epic tale of love, race, and identity.",
-    image: "/book-cover-americanah.jpg",
-    url: "#",
+    description: "Membuka tirai yang selama ini diam-diam menentukan 'warna' sebuah madrasah.",
+    image: "/manajemen_cinta_sebagai_hidden.webp",
+    url: "/books/manajemen-cinta-sebagai-hidden-curriculum",
   },
   {
     id: 4,
-    title: "Purple Hibiscus",
+    title: "Konsep Dasar Manajemen Cinta dalam Pendidikan",
     author: "Akhmad Shunhaji",
-    description: "A coming-of-age story in modern Nigeria.",
-    image: "/book-cover-purple-hibiscus.jpg",
-    url: "#",
+    description: "Pegangan ringkas yang merapikan cinta jadi konsep yang bisa dipahami cepat.",
+    image: "/konsep_dasar_manajemen_cinta.webp",
+    url: "/books/konsep-dasar-manajemen-cinta",
   },
 ]
 
@@ -192,13 +193,15 @@ export function BooksSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
         >
-          <motion.button
-            className="px-8 py-3 border-2 border-[#4a9d6f] text-[#4a9d6f] rounded-full font-semibold uppercase tracking-wide hover:bg-[#4a9d6f] hover:text-[#1a1a1a] transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Explore More
-          </motion.button>
+          <Link href="/books">
+            <motion.button
+              className="px-8 py-3 border-2 border-[#4a9d6f] text-[#4a9d6f] rounded-full font-semibold uppercase tracking-wide hover:bg-[#4a9d6f] hover:text-[#1a1a1a] transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Explore More
+            </motion.button>
+          </Link>
         </motion.div>
       </div>
     </motion.section>
