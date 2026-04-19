@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backfill:post-excerpts": "node --experimental-strip-types scripts/backfill-post-excerpts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
