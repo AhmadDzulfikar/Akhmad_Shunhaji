@@ -5,6 +5,13 @@ import { randomBytes } from "crypto";
 
 export type ImageType = "cover" | "inline";
 
+export class ImageValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImageValidationError";
+  }
+}
+
 interface ProcessedImage {
   buffer: Buffer;
   width: number;
@@ -24,6 +31,8 @@ const MAX_SIZE = {
 };
 
 const MAX_WIDTH = 1200;
+export const MAX_IMAGE_DIMENSION = 6000;
+export const MAX_IMAGE_PIXELS = 16_000_000;
 
 // Quality steps to try (descending)
 const QUALITY_STEPS = [82, 78, 74, 70, 66, 62, 58, 54, 50];
@@ -36,14 +45,34 @@ export async function processImage(
   type: ImageType = "cover"
 ): Promise<ProcessedImage> {
   // Get image metadata
-  const metadata = await sharp(inputBuffer).metadata();
-  const originalWidth = metadata.width || 1200;
+  let metadata: sharp.Metadata;
+
+  try {
+    metadata = await sharp(inputBuffer, { limitInputPixels: MAX_IMAGE_PIXELS }).metadata();
+  } catch {
+    throw new ImageValidationError("Invalid or unsupported image");
+  }
+
+  const originalWidth = metadata.width;
+  const originalHeight = metadata.height;
+
+  if (!originalWidth || !originalHeight) {
+    throw new ImageValidationError("Invalid image dimensions");
+  }
+
+  if (originalWidth > MAX_IMAGE_DIMENSION || originalHeight > MAX_IMAGE_DIMENSION) {
+    throw new ImageValidationError(`Image dimensions must be ${MAX_IMAGE_DIMENSION}px or smaller`);
+  }
+
+  if (originalWidth * originalHeight > MAX_IMAGE_PIXELS) {
+    throw new ImageValidationError("Image pixel count is too large");
+  }
 
   // Calculate resize dimensions (maintain aspect ratio)
   const width = Math.min(originalWidth, MAX_WIDTH);
 
   // First pass: resize and convert to webp with initial quality
-  let sharpInstance = sharp(inputBuffer)
+  let sharpInstance = sharp(inputBuffer, { limitInputPixels: MAX_IMAGE_PIXELS })
     .resize({ width, withoutEnlargement: true })
     .webp({ quality: QUALITY_STEPS[0] });
 
@@ -67,7 +96,7 @@ export async function processImage(
   for (let i = 1; i < QUALITY_STEPS.length; i++) {
     const quality = QUALITY_STEPS[i];
 
-    sharpInstance = sharp(inputBuffer)
+    sharpInstance = sharp(inputBuffer, { limitInputPixels: MAX_IMAGE_PIXELS })
       .resize({ width, withoutEnlargement: true })
       .webp({ quality });
 
@@ -83,7 +112,7 @@ export async function processImage(
     const scaleFactor = Math.sqrt(maxSize / outputBuffer.length);
     const newWidth = Math.floor(width * scaleFactor);
 
-    sharpInstance = sharp(inputBuffer)
+    sharpInstance = sharp(inputBuffer, { limitInputPixels: MAX_IMAGE_PIXELS })
       .resize({ width: newWidth, withoutEnlargement: true })
       .webp({ quality: 50 });
 

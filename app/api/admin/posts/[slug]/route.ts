@@ -3,8 +3,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { BLOG_ARCHIVE_CACHE_TAG } from "@/lib/posts";
+import { extractImageUrlsFromHtml, isAllowedStoredImageUrl } from "@/lib/image-policy";
+import { BLOG_ARCHIVE_CACHE_TAG, BLOG_DETAIL_CACHE_TAG } from "@/lib/posts";
 import { createPostExcerpt, sanitizePostContent } from "@/lib/post-content";
+import { markReferencedUploadAssets } from "@/lib/upload-assets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,18 +19,20 @@ async function readSlug(context: any): Promise<string> {
   return typeof slug === "string" ? slug : "";
 }
 
+const storedImageUrlSchema = z.string().trim().refine(
+  (value) => isAllowedStoredImageUrl(value),
+  { message: "Image must be uploaded through the image uploader" }
+);
+
 const updateSchema = z.object({
   title: z.string().min(1, "Title wajib diisi"),
   content: z.string().min(1, "Content wajib diisi"),
-  // Accept: empty string, full URL, or relative path starting with /
-  imageUrl: z.string().refine(
-    (val) => val === "" || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://"),
-    { message: "Invalid image URL" }
-  ).optional().or(z.literal("")),
+  imageUrl: storedImageUrlSchema.optional().or(z.literal("")),
 });
 
 function revalidateBlogArchive() {
   revalidateTag(BLOG_ARCHIVE_CACHE_TAG, "max");
+  revalidateTag(BLOG_DETAIL_CACHE_TAG, "max");
   revalidatePath("/blog");
 }
 
@@ -81,7 +85,9 @@ export async function PUT(req: Request, context: any) {
       },
     });
 
+    await markReferencedUploadAssets([updated.imageUrl, ...extractImageUrlsFromHtml(content)]);
     revalidateBlogArchive();
+    revalidatePath(`/blog/${updated.slug}`);
     return NextResponse.json({ ok: true, post: updated });
   } catch (e: any) {
     // Prisma update akan throw kalau slug tidak ada
@@ -103,6 +109,7 @@ export async function DELETE(_req: Request, context: any) {
 
     await prisma.post.delete({ where: { slug } });
     revalidateBlogArchive();
+    revalidatePath(`/blog/${slug}`);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     // Prisma delete akan throw kalau slug tidak ada

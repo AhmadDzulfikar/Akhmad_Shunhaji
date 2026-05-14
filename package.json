@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "backfill:post-excerpts": "node --experimental-strip-types scripts/backfill-post-excerpts.ts"
+    "backfill:post-excerpts": "node --experimental-strip-types scripts/backfill-post-excerpts.ts",
+    "cleanup:upload-assets": "node --experimental-strip-types scripts/cleanup-unused-upload-assets.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
