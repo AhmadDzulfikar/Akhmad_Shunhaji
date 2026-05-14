@@ -7,14 +7,33 @@ type SearchParams = {
   callbackUrl?: string | string[];
 };
 
-export default function LoginPage({
+type LoginPageProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+function normalizeCallbackUrl(callbackParam: string | string[] | undefined) {
+  const callbackUrl = Array.isArray(callbackParam)
+    ? callbackParam[0]
+    : callbackParam;
+
+  if (
+    !callbackUrl ||
+    !callbackUrl.startsWith("/") ||
+    callbackUrl.startsWith("//")
+  ) {
+    return "/blog";
+  }
+
+  return callbackUrl;
+}
+
+export default async function LoginPage({
   searchParams,
-}: {
-  searchParams?: SearchParams;
-}) {
-  const callbackParam = searchParams?.callbackUrl;
-  const callbackUrl =
-    Array.isArray(callbackParam) ? callbackParam[0] : callbackParam || "/blog";
+}: LoginPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const callbackUrl = normalizeCallbackUrl(
+    resolvedSearchParams?.callbackUrl,
+  );
 
   return <LoginForm callbackUrl={callbackUrl} />;
 }

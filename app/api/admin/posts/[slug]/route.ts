@@ -1,31 +1,15 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import sanitizeHtml from "sanitize-html";
+import { requireAdminSession } from "@/lib/admin-auth";
+import { extractImageUrlsFromHtml, isAllowedStoredImageUrl } from "@/lib/image-policy";
+import { BLOG_ARCHIVE_CACHE_TAG, BLOG_DETAIL_CACHE_TAG } from "@/lib/posts";
+import { createPostExcerpt, sanitizePostContent } from "@/lib/post-content";
+import { markReferencedUploadAssets } from "@/lib/upload-assets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function cleanHtml(input: string) {
-  return sanitizeHtml(input, {
-    allowedTags: ["p", "br", "strong", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "a", "span", "img"],
-    allowedAttributes: {
-      a: ["href", "target", "rel"],
-      img: ["src", "alt", "width", "height", "class"],
-      "*": ["style"],
-    },
-    allowedStyles: {
-      "*": {
-        "text-align": [/^(left|right|center|justify)$/],
-        "font-size": [/^\d+(\.\d+)?(px|em|rem|%)$/],
-        "font-family": [/^[\w\s"',-]+$/],
-      },
-    },
-    transformTags: {
-      a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer", target: "_blank" }),
-    },
-  });
-}
 
 async function readSlug(context: any): Promise<string> {
   // Next 15/16 kadang params berupa Promise, kadang object biasa
@@ -35,18 +19,28 @@ async function readSlug(context: any): Promise<string> {
   return typeof slug === "string" ? slug : "";
 }
 
+const storedImageUrlSchema = z.string().trim().refine(
+  (value) => isAllowedStoredImageUrl(value),
+  { message: "Image must be uploaded through the image uploader" }
+);
+
 const updateSchema = z.object({
   title: z.string().min(1, "Title wajib diisi"),
   content: z.string().min(1, "Content wajib diisi"),
-  // Accept: empty string, full URL, or relative path starting with /
-  imageUrl: z.string().refine(
-    (val) => val === "" || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://"),
-    { message: "Invalid image URL" }
-  ).optional().or(z.literal("")),
+  imageUrl: storedImageUrlSchema.optional().or(z.literal("")),
 });
+
+function revalidateBlogArchive() {
+  revalidateTag(BLOG_ARCHIVE_CACHE_TAG, "max");
+  revalidateTag(BLOG_DETAIL_CACHE_TAG, "max");
+  revalidatePath("/blog");
+}
 
 export async function GET(_req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
@@ -62,6 +56,9 @@ export async function GET(_req: Request, context: any) {
 
 export async function PUT(req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
@@ -75,17 +72,22 @@ export async function PUT(req: Request, context: any) {
     }
 
     const { title, imageUrl } = parsed.data;
-    const content = cleanHtml(parsed.data.content);
+    const content = sanitizePostContent(parsed.data.content);
+    const excerpt = createPostExcerpt(content);
 
     const updated = await prisma.post.update({
       where: { slug },
       data: {
         title,
+        excerpt,
         content,
         imageUrl: imageUrl ? imageUrl : null,
       },
     });
 
+    await markReferencedUploadAssets([updated.imageUrl, ...extractImageUrlsFromHtml(content)]);
+    revalidateBlogArchive();
+    revalidatePath(`/blog/${updated.slug}`);
     return NextResponse.json({ ok: true, post: updated });
   } catch (e: any) {
     // Prisma update akan throw kalau slug tidak ada
@@ -99,10 +101,15 @@ export async function PUT(req: Request, context: any) {
 
 export async function DELETE(_req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
     await prisma.post.delete({ where: { slug } });
+    revalidateBlogArchive();
+    revalidatePath(`/blog/${slug}`);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     // Prisma delete akan throw kalau slug tidak ada

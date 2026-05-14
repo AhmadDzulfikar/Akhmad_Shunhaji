@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backfill:books": "node scripts/backfill-books.cjs",
+    "backfill:post-excerpts": "node --experimental-strip-types scripts/backfill-post-excerpts.ts",
+    "cleanup:upload-assets": "node --experimental-strip-types scripts/cleanup-unused-upload-assets.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -94,5 +97,8 @@
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
+  },
+  "overrides": {
+    "undici": "6.24.0"
   }
 }

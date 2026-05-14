@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getBlogPostDetail } from "@/lib/posts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const { slug } = await context.params;
-    const post = await prisma.post.findUnique({ where: { slug } });
+    const post = await getBlogPostDetail(slug);
 
     if (!post) return NextResponse.json({ error: "not_found" }, { status: 404 });
     return NextResponse.json(post);

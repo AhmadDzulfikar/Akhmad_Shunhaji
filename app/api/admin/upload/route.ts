@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { saveImage, isValidImageMime, MAX_FILE_SIZE, ImageType } from "@/lib/upload";
+import { requireAdminSession } from "@/lib/admin-auth";
+import { saveImage, isValidImageMime, MAX_FILE_SIZE, ImageType, ImageValidationError } from "@/lib/upload";
+import { recordUploadAsset } from "@/lib/upload-assets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     // Check admin auth
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const session = await requireAdminSession();
+    if (!session) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
     // Process and save image (convert to WebP, compress)
     const result = await saveImage(bytes, type);
+    await recordUploadAsset({ ...result, kind: type });
 
     return NextResponse.json({
       ok: true,
@@ -57,6 +58,14 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("Upload error:", error);
+
+    if (error instanceof ImageValidationError) {
+      return NextResponse.json(
+        { error: "invalid image", details: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "upload failed", details: error?.message },
       { status: 500 }

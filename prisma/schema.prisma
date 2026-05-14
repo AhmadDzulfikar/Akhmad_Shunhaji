@@ -13,25 +13,56 @@ model Post {
   id        Int       @id @default(autoincrement())
   slug      String    @unique
   title     String
+  excerpt   String?
   content   String
   imageUrl  String?
   createdAt DateTime  @default(now())
   comments  Comment[]
+
+  @@index([createdAt, id])
+}
+
+model UploadAsset {
+  id               Int       @id @default(autoincrement())
+  url              String    @unique
+  path             String    @unique
+  kind             String
+  width            Int?
+  height           Int?
+  sizeBytes        Int
+  createdAt        DateTime  @default(now())
+  lastReferencedAt DateTime?
+
+  @@index([createdAt])
+  @@index([lastReferencedAt])
+}
+
+model Book {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  description String
+  imageUrl    String
+  buyUrl      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([createdAt, id])
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   postId    Int
   parentId  Int?
   name      String
   email     String
   content   String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("CommentToReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentToReplies")
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentToReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentToReplies")
 
   @@index([postId, createdAt])
   @@index([parentId])
-} 
+}
