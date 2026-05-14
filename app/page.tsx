@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer"
 import { getBooksArchiveData } from "@/lib/books"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const books = (await getBooksArchiveData()).slice(0, 4)
