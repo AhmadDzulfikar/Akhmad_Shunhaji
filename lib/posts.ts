@@ -46,7 +46,13 @@ export function parsePageParam(value: string | null | undefined) {
     return null;
   }
 
-  const page = Number.parseInt(value, 10);
+  const trimmedValue = value.trim();
+
+  if (!/^\d+$/.test(trimmedValue)) {
+    return null;
+  }
+
+  const page = Number.parseInt(trimmedValue, 10);
 
   if (!Number.isFinite(page) || page < 1) {
     return null;
