@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "backfill:books": "node --experimental-strip-types scripts/backfill-books.ts",
+    "backfill:books": "node scripts/backfill-books.cjs",
     "backfill:post-excerpts": "node --experimental-strip-types scripts/backfill-post-excerpts.ts",
     "cleanup:upload-assets": "node --experimental-strip-types scripts/cleanup-unused-upload-assets.ts"
   },

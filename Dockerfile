@@ -38,10 +38,11 @@ COPY --from=builder --chown=nextjs:nextjs /app/public ./public
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nextjs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nextjs /app/scripts/backfill-books.cjs ./scripts/backfill-books.cjs
 
 USER nextjs
 EXPOSE 3000
 
 # pilih salah satu:
 # CMD ["sh","-c","npx prisma migrate deploy --skip-generate && node server.js"]
-CMD ["sh","-c","npx prisma db push --skip-generate && node server.js"]
+CMD ["sh","-c","npx prisma db push --skip-generate && node scripts/backfill-books.cjs && node server.js"]
