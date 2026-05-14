@@ -37,6 +37,19 @@ model UploadAsset {
   @@index([lastReferencedAt])
 }
 
+model Book {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  description String
+  imageUrl    String
+  buyUrl      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([createdAt, id])
+}
+
 model Comment {
   id        Int      @id @default(autoincrement())
   postId    Int
