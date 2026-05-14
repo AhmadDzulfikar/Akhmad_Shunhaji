@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { BLOG_ARCHIVE_CACHE_TAG } from "@/lib/posts";
 import { createPostExcerpt, sanitizePostContent } from "@/lib/post-content";
 
@@ -33,6 +34,9 @@ function revalidateBlogArchive() {
 
 export async function GET(_req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
@@ -48,6 +52,9 @@ export async function GET(_req: Request, context: any) {
 
 export async function PUT(req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
@@ -88,6 +95,9 @@ export async function PUT(req: Request, context: any) {
 
 export async function DELETE(_req: Request, context: any) {
   try {
+    const ok = await requireAdminSession();
+    if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const slug = await readSlug(context);
     if (!slug) return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
 
