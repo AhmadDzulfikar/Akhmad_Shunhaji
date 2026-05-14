@@ -4,6 +4,9 @@ import { BlogArchiveView } from "@/components/blog-archive-view";
 import { getBlogPageHref } from "@/lib/blog-routes";
 import { getBlogArchivePageData, parsePageParam } from "@/lib/posts";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 type BlogPageSearchParams = {
   page?: string | string[];
 };

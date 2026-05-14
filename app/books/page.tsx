@@ -5,6 +5,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { getBooksArchiveData } from "@/lib/books";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export default async function BooksPage() {
   const [books, adminSession] = await Promise.all([
