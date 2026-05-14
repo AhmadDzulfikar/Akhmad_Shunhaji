@@ -50,6 +50,11 @@ async function main() {
       imageUrl: true,
     },
   });
+  const books = await prisma.book.findMany({
+    select: {
+      imageUrl: true,
+    },
+  });
 
   const referencedUrls = new Set<string>();
 
@@ -60,6 +65,12 @@ async function main() {
       if (url && getManagedUploadPath(url)) {
         referencedUrls.add(url);
       }
+    }
+  }
+
+  for (const book of books) {
+    if (book.imageUrl && getManagedUploadPath(book.imageUrl)) {
+      referencedUrls.add(book.imageUrl);
     }
   }
 
