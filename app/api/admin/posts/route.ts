@@ -4,24 +4,28 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import slugify from "@/lib/slugify"
 import { requireAdminSession } from "@/lib/admin-auth"
-import { BLOG_ARCHIVE_CACHE_TAG } from "@/lib/posts"
+import { extractImageUrlsFromHtml, isAllowedStoredImageUrl } from "@/lib/image-policy"
+import { BLOG_ARCHIVE_CACHE_TAG, BLOG_DETAIL_CACHE_TAG } from "@/lib/posts"
 import { createPostExcerpt, sanitizePostContent } from "@/lib/post-content"
+import { markReferencedUploadAssets } from "@/lib/upload-assets"
 
 export const dynamic = "force-dynamic"
 
 function revalidateBlogArchive() {
     revalidateTag(BLOG_ARCHIVE_CACHE_TAG, "max")
+    revalidateTag(BLOG_DETAIL_CACHE_TAG, "max")
     revalidatePath("/blog")
 }
+
+const storedImageUrlSchema = z.string().trim().refine(
+    (value) => isAllowedStoredImageUrl(value),
+    { message: "Image must be uploaded through the image uploader" }
+)
 
 const createSchema = z.object({
     title: z.string().min(1),
     content: z.string().min(1),
-    // Accept: empty string, full URL, or relative path starting with /
-    imageUrl: z.string().refine(
-        (val) => val === "" || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://"),
-        { message: "Invalid image URL" }
-    ).optional().or(z.literal("")),
+    imageUrl: storedImageUrlSchema.optional().or(z.literal("")),
 })
 
 export async function GET(req: Request) {
@@ -54,6 +58,8 @@ export async function POST(req: Request) {
     const post = await prisma.post.create({
         data: { title, excerpt, content, imageUrl: imageUrl || null, slug },
     })
+    await markReferencedUploadAssets([post.imageUrl, ...extractImageUrlsFromHtml(content)])
     revalidateBlogArchive()
+    revalidatePath(`/blog/${post.slug}`)
     return NextResponse.json({ ok: true, post })
 }

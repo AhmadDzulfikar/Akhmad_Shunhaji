@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { BlogArchiveView } from "@/components/blog-archive-view";
-import { getBlogArchivePageData, getBlogPageHref, parsePageParam } from "@/lib/posts";
+import { getBlogPageHref } from "@/lib/blog-routes";
+import { getBlogArchivePageData, parsePageParam } from "@/lib/posts";
 
 type BlogPageSearchParams = {
   page?: string | string[];

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { saveImage, isValidImageMime, MAX_FILE_SIZE, ImageType } from "@/lib/upload";
+import { requireAdminSession } from "@/lib/admin-auth";
+import { saveImage, isValidImageMime, MAX_FILE_SIZE, ImageType, ImageValidationError } from "@/lib/upload";
+import { recordUploadAsset } from "@/lib/upload-assets";
 import { lookup } from "dns/promises";
 
 export const runtime = "nodejs";
@@ -23,9 +23,23 @@ const PRIVATE_RANGES = [
 ];
 
 const BLOCKED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"];
+const FETCH_TIMEOUT_MS = 8000;
+const MAX_REDIRECTS = 3;
+
+class RemoteImageError extends Error {
+  constructor(
+    message: string,
+    public readonly status = 400
+  ) {
+    super(message);
+    this.name = "RemoteImageError";
+  }
+}
 
 function isPrivateIP(ip: string): boolean {
-  return PRIVATE_RANGES.some((regex) => regex.test(ip));
+  const normalizedIp = ip.toLowerCase().startsWith("::ffff:") ? ip.slice(7) : ip;
+
+  return PRIVATE_RANGES.some((regex) => regex.test(normalizedIp));
 }
 
 async function resolveAndValidateHost(hostname: string): Promise<boolean> {
@@ -52,6 +66,27 @@ async function resolveAndValidateHost(hostname: string): Promise<boolean> {
   }
 }
 
+async function validateRemoteImageUrl(url: string) {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new RemoteImageError("invalid url format", 400);
+  }
+
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    throw new RemoteImageError("only http/https allowed", 400);
+  }
+
+  const isAllowed = await resolveAndValidateHost(parsedUrl.hostname);
+  if (!isAllowed) {
+    throw new RemoteImageError("blocked host", 400);
+  }
+
+  return parsedUrl;
+}
+
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
@@ -71,11 +106,50 @@ async function fetchWithTimeout(
   }
 }
 
+async function fetchImageWithRedirects(url: string) {
+  let currentUrl = url;
+
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    const parsedUrl = await validateRemoteImageUrl(currentUrl);
+
+    const response = await fetchWithTimeout(
+      parsedUrl.toString(),
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; ImageBot/1.0)",
+          Accept: "image/*",
+        },
+        redirect: "manual",
+      },
+      FETCH_TIMEOUT_MS
+    );
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+
+      if (!location) {
+        throw new RemoteImageError("redirect missing location", 400);
+      }
+
+      if (redirectCount === MAX_REDIRECTS) {
+        throw new RemoteImageError("too many redirects", 400);
+      }
+
+      currentUrl = new URL(location, parsedUrl).toString();
+      continue;
+    }
+
+    return response;
+  }
+
+  throw new RemoteImageError("too many redirects", 400);
+}
+
 export async function POST(req: Request) {
   try {
     // Check admin auth
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const session = await requireAdminSession();
+    if (!session) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
@@ -91,45 +165,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
 
-    // Validate URL format
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(url);
-    } catch {
-      return NextResponse.json({ error: "invalid url format" }, { status: 400 });
-    }
-
-    // Only allow http/https
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      return NextResponse.json({ error: "only http/https allowed" }, { status: 400 });
-    }
-
-    // SSRF protection: validate host
-    const isAllowed = await resolveAndValidateHost(parsedUrl.hostname);
-    if (!isAllowed) {
-      return NextResponse.json(
-        { error: "blocked host", reason: "private or internal address" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch with timeout (8 seconds)
+    // Fetch with timeout and manual redirect validation
     let response: Response;
     try {
-      response = await fetchWithTimeout(
-        url,
-        {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; ImageBot/1.0)",
-            Accept: "image/*",
-          },
-        },
-        8000
-      );
+      response = await fetchImageWithRedirects(url);
     } catch (error: any) {
       if (error.name === "AbortError") {
         return NextResponse.json({ error: "request timeout" }, { status: 408 });
       }
+
+      if (error instanceof RemoteImageError) {
+        return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+
       throw error;
     }
 
@@ -197,6 +245,7 @@ export async function POST(req: Request) {
 
     // Process and save image
     const result = await saveImage(buffer, type);
+    await recordUploadAsset({ ...result, kind: type });
 
     return NextResponse.json({
       ok: true,
@@ -207,6 +256,18 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("Upload URL error:", error);
+
+    if (error instanceof RemoteImageError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    if (error instanceof ImageValidationError) {
+      return NextResponse.json(
+        { error: "invalid image", details: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "upload failed", details: error?.message },
       { status: 500 }

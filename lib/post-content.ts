@@ -1,5 +1,7 @@
 import sanitizeHtml from "sanitize-html";
 
+import { isAllowedStoredImageUrl } from "./image-policy.ts";
+
 export const POST_EXCERPT_LENGTH = 180;
 
 const POST_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
@@ -23,7 +25,7 @@ const POST_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   ],
   allowedAttributes: {
     a: ["href", "target", "rel"],
-    img: ["src", "alt", "width", "height", "class"],
+    img: ["src", "alt", "width", "height", "class", "loading", "decoding", "referrerpolicy"],
     "*": ["style"],
   },
   allowedStyles: {
@@ -38,6 +40,20 @@ const POST_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
       rel: "noopener noreferrer",
       target: "_blank",
     }),
+    img: (tagName, attribs) => ({
+      tagName,
+      attribs: {
+        ...attribs,
+        alt: attribs.alt || "",
+        class: attribs.class || "max-w-full h-auto rounded-lg my-4",
+        decoding: "async",
+        loading: "lazy",
+        referrerpolicy: "no-referrer",
+      },
+    }),
+  },
+  exclusiveFilter(frame) {
+    return frame.tag === "img" && !isAllowedStoredImageUrl(frame.attribs.src, { allowEmpty: false });
   },
 };
 
@@ -77,4 +93,8 @@ export function createPostExcerpt(input: string, maxLength = POST_EXCERPT_LENGTH
   }
 
   return `${text.slice(0, maxLength - 3).trim()}...`;
+}
+
+export function preparePostContentForDisplay(input: string) {
+  return sanitizePostContent(input);
 }

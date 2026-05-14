@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { getBlogPageHref } from "@/lib/blog-routes";
 import { getPaginationItems } from "@/lib/pagination";
-import { getBlogPageHref } from "@/lib/posts";
 
 type BlogPaginationProps = {
   currentPage: number;

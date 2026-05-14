@@ -2,10 +2,12 @@ import type { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { preparePostContentForDisplay } from "@/lib/post-content";
 
 export const BLOG_ARCHIVE_PAGE_SIZE = 9;
 export const BLOG_ARCHIVE_REVALIDATE_SECONDS = 300;
 export const BLOG_ARCHIVE_CACHE_TAG = "blog-archive";
+export const BLOG_DETAIL_CACHE_TAG = "blog-detail";
 
 const blogArchivePostSelect = {
   id: true,
@@ -18,6 +20,19 @@ const blogArchivePostSelect = {
 
 type BlogArchivePostRecord = Prisma.PostGetPayload<{
   select: typeof blogArchivePostSelect;
+}>;
+
+const blogDetailPostSelect = {
+  id: true,
+  slug: true,
+  title: true,
+  content: true,
+  imageUrl: true,
+  createdAt: true,
+} satisfies Prisma.PostSelect;
+
+type BlogDetailPostRecord = Prisma.PostGetPayload<{
+  select: typeof blogDetailPostSelect;
 }>;
 
 export type BlogArchivePostItem = {
@@ -37,9 +52,14 @@ export type BlogArchivePageData = {
   totalPages: number;
 };
 
-export function getBlogPageHref(page: number) {
-  return `/blog?page=${page}`;
-}
+export type BlogDetailPostItem = {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+  imageUrl: string | null;
+  createdAt: string;
+};
 
 export function parsePageParam(value: string | null | undefined) {
   if (value == null || value.trim() === "") {
@@ -71,6 +91,17 @@ function mapArchivePost(record: BlogArchivePostRecord): BlogArchivePostItem {
     slug: record.slug,
     title: record.title,
     excerpt: record.excerpt?.trim() ?? "",
+    imageUrl: record.imageUrl,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapDetailPost(record: BlogDetailPostRecord): BlogDetailPostItem {
+  return {
+    id: record.id,
+    slug: record.slug,
+    title: record.title,
+    content: preparePostContentForDisplay(record.content),
     imageUrl: record.imageUrl,
     createdAt: record.createdAt.toISOString(),
   };
@@ -119,4 +150,22 @@ export async function getBlogArchivePageData(requestedPage: number): Promise<Blo
     total,
     totalPages,
   };
+}
+
+export async function getBlogPostDetail(slug: string): Promise<BlogDetailPostItem | null> {
+  return unstable_cache(
+    async () => {
+      const post = await prisma.post.findUnique({
+        where: { slug },
+        select: blogDetailPostSelect,
+      });
+
+      return post ? mapDetailPost(post) : null;
+    },
+    ["blog-detail", slug],
+    {
+      revalidate: BLOG_ARCHIVE_REVALIDATE_SECONDS,
+      tags: [BLOG_DETAIL_CACHE_TAG, `${BLOG_DETAIL_CACHE_TAG}:${slug}`],
+    }
+  )();
 }

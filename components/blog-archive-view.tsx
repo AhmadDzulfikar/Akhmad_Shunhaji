@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 
 import { BlogAddButton } from "@/components/blog-add-button";
@@ -59,13 +60,24 @@ export function BlogArchiveView({ currentPage, posts, totalPages }: BlogArchiveV
                 <Link href={`/blog/${post.slug}`}>
                   <div className="bg-[#262727] rounded-lg overflow-hidden border border-[#3a3a3a] hover:border-[#4a9d6f] transition-colors duration-300">
                     <div className="relative h-48 overflow-hidden bg-[#1a1a1a]">
-                      <motion.img
-                        src={post.imageUrl || "/placeholder.png"}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.3, ease: EASE_OUT }}
-                      />
+                      {post.imageUrl ? (
+                        <motion.div
+                          className="absolute inset-0"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.3, ease: EASE_OUT }}
+                        >
+                          <Image
+                            src={post.imageUrl}
+                            alt={post.title}
+                            fill
+                            priority={index < 3}
+                            sizes="(min-width: 1024px) 384px, (min-width: 768px) 50vw, calc(100vw - 64px)"
+                            className="object-cover"
+                          />
+                        </motion.div>
+                      ) : (
+                        <div className="absolute inset-0 bg-[#202121]" />
+                      )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                     </div>
 
